@@ -116,7 +116,7 @@ next = function(){
  finish();
 };
 finish = function(){
- stopPlayback();const s=session;if(!s)return;state.stickers++;save();const spelling=s.finalCorrect.size,meaning=s.meaningCorrect.size;
+ stopPlayback();const s=session;if(!s)return;save();const spelling=s.finalCorrect.size,meaning=s.meaningCorrect.size;
  $('#app').innerHTML=`<section class="learning completion"><div class="mascot-celebration">${learningBuddy()}</div>${gardenPicture(state.stickers,true)}<h1>Thêm một bông hoa!</h1><p class="garden-earned">Mình làm được rồi!</p><p>Bạn đã luyện ${new Set([...s.attempted,...s.meaningAttempted]).size} từ hôm nay.</p><div class="completion-skills"><p><strong>${meaning}</strong> từ chọn đúng nghĩa</p><p><strong>${spelling}</strong> từ tự viết đúng</p></div>${s.repaired.size?`<p>Bạn đã sửa ${s.repaired.size} từ theo mẫu.</p>`:''}${!storageOK?'<p role="alert">Tiến bộ chưa được lưu trên trình duyệt này.</p>':''}<button id="again" class="primary">${uiIcon('flower')} Về vườn</button></section>`;$('#again').onclick=home;session=null;window.scrollTo?.({top:0,behavior:'instant'});
 };
 
