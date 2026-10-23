@@ -1,6 +1,44 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email == 'hahuy0811@gmail.com'
+        && request.auth.token.email_verified == true
+        && request.auth.token.firebase.sign_in_provider == 'google.com';
+    }
+    function validPresenceCreate() {
+      return request.resource.data.keys().hasAll(['firstSeen', 'lastSeen'])
+        && request.resource.data.keys().hasOnly(['firstSeen', 'lastSeen'])
+        && request.resource.data.firstSeen == request.time
+        && request.resource.data.lastSeen == request.time;
+    }
+    function validPresenceUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastSeen'])
+        && request.resource.data.lastSeen == request.time;
+    }
+    // Aggregate telemetry has no identity, URL, word or answer fields.
+    // Public, append-only event writes are untrusted analytics, never authority for rewards.
+    match /{statsCollection}/{eventId} {
+      allow read: if statsCollection in ['statsViews', 'statsStarts', 'statsCompletions'] && isAdmin();
+      allow create: if statsCollection in ['statsViews', 'statsStarts', 'statsCompletions']
+        && eventId.matches('^[A-Za-z0-9]{20}$')
+        && request.resource.data.keys().hasAll(['at'])
+        && request.resource.data.keys().hasOnly(['at'])
+        && request.resource.data.at == request.time;
+    }
+    match /statsVisitors/{browserId} {
+      allow read: if isAdmin();
+      allow create: if browserId.matches('^[a-f0-9-]{36}$') && validPresenceCreate();
+      allow update: if browserId.matches('^[a-f0-9-]{36}$') && validPresenceUpdate();
+    }
+    match /statsAccounts/{uid} {
+      allow read: if isAdmin();
+      allow create: if request.auth != null && request.auth.uid == uid
+        && request.auth.token.firebase.sign_in_provider == 'google.com' && validPresenceCreate();
+      allow update: if request.auth != null && request.auth.uid == uid
+        && request.auth.token.firebase.sign_in_provider == 'google.com' && validPresenceUpdate();
+    }
     match /startersProgress/{uid} {
       allow read: if request.auth != null && request.auth.uid == uid;
       allow create, update: if request.auth != null && request.auth.uid == uid
